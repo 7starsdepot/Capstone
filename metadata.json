@@ -1,0 +1,6 @@
+{
+  "name": "Learner Performance & Early Intervention System",
+  "description": "Data-Driven Learner Performance Management and Early Intervention System with Learner-Facing Assessments, Tutor Real-Time Flagging, School Head Analytics, and SDO Division Decision Support.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
