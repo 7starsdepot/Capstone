@@ -1299,11 +1299,18 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                 <TrendingUp className="w-4 h-4 text-blue-700 shrink-0" />
                 <span className="font-bold text-slate-800">
                   Highest Growth Competency:{' '}
-                  <span className="text-blue-700">Dissimilar Fractions (+54% increase)</span>
+                  <span className="text-blue-700">
+                    {activeTrendData.length > 0 &&
+                    activeTrendData[activeTrendData.length - 1].dissimilarFractions > activeTrendData[0].dissimilarFractions
+                      ? `Dissimilar Fractions (+${activeTrendData[activeTrendData.length - 1].dissimilarFractions - activeTrendData[0].dissimilarFractions}% increase)`
+                      : 'None registered (0% baseline)'}
+                  </span>
                 </span>
               </div>
               <div className="text-[11px] text-slate-600 bg-white border border-blue-200 px-3 py-1 rounded-lg font-medium shadow-2xs">
-                Class Average Mastery Score improved from <strong className="text-slate-900">45.6%</strong> to <strong className="text-emerald-700">89.4%</strong>
+                Class Average Mastery Score:{' '}
+                <strong className="text-slate-900">{activeTrendData[0]?.averageScore ?? 0}%</strong> to{' '}
+                <strong className="text-emerald-700">{activeTrendData[activeTrendData.length - 1]?.averageScore ?? 0}%</strong>
               </div>
             </div>
           </div>
