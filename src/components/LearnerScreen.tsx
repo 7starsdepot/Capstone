@@ -54,7 +54,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
   const [showReadingAid, setShowReadingAid] = useState<boolean>(true);
   const defaultSchool = registeredLearners[0]?.schoolName || LIGAO_ELEMENTARY_SCHOOLS[0] || 'PINIT ELEMENTARY SCHOOL';
   const [studentSchoolName, setStudentSchoolName] = useState<string>(defaultSchool);
-  const [studentGradeSection, setStudentGradeSection] = useState<string>(registeredLearners[0]?.section || 'Grade 5 - Mabini');
+  const [studentGradeSection, setStudentGradeSection] = useState<string>(registeredLearners[0]?.section || '');
   const [studentNameInput, setStudentNameInput] = useState<string>(registeredLearners[0]?.name || '');
   const [timeRemainingSeconds, setTimeRemainingSeconds] = useState<number>(600);
   const [latestSubmission, setLatestSubmission] = useState<Submission | null>(null);
@@ -140,7 +140,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
       setStudentGradeSection(matching[0].section);
       setStudentNameInput(matching[0].name);
     } else {
-      setStudentGradeSection('Grade 5 - Mabini');
+      setStudentGradeSection('');
       setStudentNameInput('');
     }
   };
@@ -211,6 +211,58 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
 
   const currentQuestion = activeAssessment?.questions[currentQuestionIndex];
 
+  // Helper to format math text & fractions into clear spoken words for SpeechSynthesis
+  const formatTextForSpeech = (rawText: string): string => {
+    if (!rawText) return '';
+
+    const numberToWords: Record<number, string> = {
+      0: 'zero', 1: 'one', 2: 'two', 3: 'three', 4: 'four',
+      5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine',
+      10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen',
+      14: 'fourteen', 15: 'fifteen', 16: 'sixteen', 17: 'seventeen',
+      18: 'eighteen', 19: 'nineteen', 20: 'twenty'
+    };
+
+    const denominatorSingular: Record<number, string> = {
+      2: 'half', 3: 'third', 4: 'fourth', 5: 'fifth',
+      6: 'sixth', 7: 'seventh', 8: 'eighth', 9: 'ninth',
+      10: 'tenth', 12: 'twelfth', 16: 'sixteenth', 20: 'twentieth'
+    };
+
+    const denominatorPlural: Record<number, string> = {
+      2: 'halves', 3: 'thirds', 4: 'fourths', 5: 'fifths',
+      6: 'sixths', 7: 'sevenths', 8: 'eighths', 9: 'ninths',
+      10: 'tenths', 12: 'twelfths', 16: 'sixteenths', 20: 'twentieths'
+    };
+
+    // Replace fractions like 1/3 or 1 / 3 -> "one third", 2/3 -> "two thirds"
+    let formatted = rawText.replace(/\b(\d+)\s*\/\s*(\d+)\b/g, (_, numStr, denStr) => {
+      const num = parseInt(numStr, 10);
+      const den = parseInt(denStr, 10);
+
+      const numWord = numberToWords[num] || numStr;
+      if (num === 1) {
+        const denWord = denominatorSingular[den] || `${den}th`;
+        return `${numWord} ${denWord}`;
+      } else {
+        const denWord = denominatorPlural[den] || `${den}ths`;
+        return `${numWord} ${denWord}`;
+      }
+    });
+
+    // Replace any remaining standalone slash with "over"
+    formatted = formatted.replace(/\s*\/\s*/g, ' over ');
+
+    // Replace mathematical operators with spoken words
+    formatted = formatted
+      .replace(/\s*\+\s*/g, ' plus ')
+      .replace(/\s*[-−]\s*/g, ' minus ')
+      .replace(/\s*=\s*/g, ' equals ')
+      .replace(/\s*[×*]\s*/g, ' times ');
+
+    return formatted;
+  };
+
   // Speech synthesis helper
   const speakText = (text: string) => {
     if (!('speechSynthesis' in window)) return;
@@ -220,7 +272,8 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    const spokenText = formatTextForSpeech(text);
+    const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.rate = 0.85; // Slightly slower for primary learners
     utterance.pitch = 1.0;
     utterance.onend = () => setIsSpeaking(false);
@@ -506,11 +559,15 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
               onChange={(e) => setSelectedAssessmentId(e.target.value)}
               className="bg-slate-50 text-slate-800 border border-slate-200 rounded-lg px-3 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {assessments.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.subject} ({a.type === 'pre_session' ? 'Pre-Check' : 'Post-Check'})
-                </option>
-              ))}
+              {assessments.map((a) => {
+                const comps = Array.from(new Set(a.questions?.map((q) => q.competency).filter(Boolean)));
+                const compName = comps.length > 0 ? comps.join(', ') : a.title.replace(/^Grade \d+ Math:\s*/i, '');
+                return (
+                  <option key={a.id} value={a.id}>
+                    {compName} ({a.type === 'pre_session' ? 'Pre-Check' : 'Post-Check'})
+                  </option>
+                );
+              })}
             </select>
           </div>
         </div>
@@ -622,6 +679,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
                 }
                 title="Guided Solution Framework (Fill in the blanks)"
                 subtitle="The solution framework is provided below. Complete the missing values or steps as you solve:"
+                hideNotificationBadges={true}
               />
 
               {/* Extra Scratchpad Text Note */}
@@ -916,6 +974,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
                         showValidation={true}
                         title="Learner's Solution Steps Performance"
                         subtitle="Framework evaluation of filled-in blanks:"
+                        hideNotificationBadges={true}
                       />
 
                       {/* Diagnostic Misconception Breakdown */}

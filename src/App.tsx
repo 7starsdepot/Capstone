@@ -20,10 +20,10 @@ import { BellRing, CheckCircle2, Sparkles } from 'lucide-react';
 export default function App() {
   const [currentRole, setCurrentRole] = useState<UserRole>('tutor');
 
-  // Load persisted states or fall back to initial mock data
+  // Load persisted states or fall back to clean initial data
   const [submissions, setSubmissions] = useState<Submission[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_submissions_v2');
+      const saved = localStorage.getItem('irip_submissions_v3');
       return saved ? JSON.parse(saved) : INITIAL_SUBMISSIONS;
     } catch {
       return INITIAL_SUBMISSIONS;
@@ -32,7 +32,7 @@ export default function App() {
 
   const [assessments, setAssessments] = useState<Assessment[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_assessments_v1');
+      const saved = localStorage.getItem('irip_assessments_v2');
       return saved ? JSON.parse(saved) : INITIAL_ASSESSMENTS;
     } catch {
       return INITIAL_ASSESSMENTS;
@@ -41,7 +41,7 @@ export default function App() {
 
   const [registeredLearners, setRegisteredLearners] = useState<RegisteredLearner[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_registeredLearners_v1');
+      const saved = localStorage.getItem('irip_registeredLearners_v2');
       return saved ? JSON.parse(saved) : INITIAL_REGISTERED_LEARNERS;
     } catch {
       return INITIAL_REGISTERED_LEARNERS;
@@ -50,7 +50,7 @@ export default function App() {
 
   const [tutorAccounts, setTutorAccounts] = useState<TutorAccount[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_tutorAccounts_v1');
+      const saved = localStorage.getItem('irip_tutorAccounts_v3');
       return saved ? JSON.parse(saved) : INITIAL_TUTOR_ACCOUNTS;
     } catch {
       return INITIAL_TUTOR_ACCOUNTS;
@@ -59,7 +59,7 @@ export default function App() {
 
   const [schoolHeadAccounts, setSchoolHeadAccounts] = useState<SchoolHeadAccount[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_schoolHeadAccounts_v1');
+      const saved = localStorage.getItem('irip_schoolHeadAccounts_v2');
       return saved ? JSON.parse(saved) : INITIAL_SCHOOL_HEAD_ACCOUNTS;
     } catch {
       return INITIAL_SCHOOL_HEAD_ACCOUNTS;
@@ -68,7 +68,7 @@ export default function App() {
 
   const [toolkit, setToolkit] = useState<InterventionStrategy[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_toolkit_v1');
+      const saved = localStorage.getItem('irip_toolkit_v2');
       return saved ? JSON.parse(saved) : INTERVENTION_TOOLKIT;
     } catch {
       return INTERVENTION_TOOLKIT;
@@ -77,7 +77,7 @@ export default function App() {
 
   const [schools, setSchools] = useState<SchoolStats[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_schools_v1');
+      const saved = localStorage.getItem('irip_schools_v2');
       return saved ? JSON.parse(saved) : SCHOOL_STATS_DATA;
     } catch {
       return SCHOOL_STATS_DATA;
@@ -87,10 +87,32 @@ export default function App() {
   const [isToolkitOpen, setIsToolkitOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Sync state changes to localStorage to ensure edited data is never reset
+  // Clear any legacy cached keys to guarantee a clean state reset
+  useEffect(() => {
+    const legacyKeys = [
+      'irip_submissions_v1',
+      'irip_submissions_v2',
+      'irip_assessments_v1',
+      'irip_registeredLearners_v1',
+      'irip_tutorAccounts_v1',
+      'irip_tutorAccounts_v2',
+      'irip_schoolHeadAccounts_v1',
+      'irip_toolkit_v1',
+      'irip_schools_v1',
+    ];
+    legacyKeys.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // ignore
+      }
+    });
+  }, []);
+
+  // Sync state changes to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('irip_submissions_v2', JSON.stringify(submissions));
+      localStorage.setItem('irip_submissions_v3', JSON.stringify(submissions));
     } catch (e) {
       console.error('Failed to persist submissions to localStorage', e);
     }
@@ -98,7 +120,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_assessments_v1', JSON.stringify(assessments));
+      localStorage.setItem('irip_assessments_v2', JSON.stringify(assessments));
     } catch (e) {
       console.error('Failed to persist assessments to localStorage', e);
     }
@@ -106,7 +128,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_registeredLearners_v1', JSON.stringify(registeredLearners));
+      localStorage.setItem('irip_registeredLearners_v2', JSON.stringify(registeredLearners));
     } catch (e) {
       console.error('Failed to persist registeredLearners to localStorage', e);
     }
@@ -114,7 +136,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_tutorAccounts_v1', JSON.stringify(tutorAccounts));
+      localStorage.setItem('irip_tutorAccounts_v3', JSON.stringify(tutorAccounts));
     } catch (e) {
       console.error('Failed to persist tutorAccounts to localStorage', e);
     }
@@ -122,7 +144,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_schoolHeadAccounts_v1', JSON.stringify(schoolHeadAccounts));
+      localStorage.setItem('irip_schoolHeadAccounts_v2', JSON.stringify(schoolHeadAccounts));
     } catch (e) {
       console.error('Failed to persist schoolHeadAccounts to localStorage', e);
     }
@@ -130,7 +152,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_toolkit_v1', JSON.stringify(toolkit));
+      localStorage.setItem('irip_toolkit_v2', JSON.stringify(toolkit));
     } catch (e) {
       console.error('Failed to persist toolkit to localStorage', e);
     }
@@ -138,7 +160,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_schools_v1', JSON.stringify(schools));
+      localStorage.setItem('irip_schools_v2', JSON.stringify(schools));
     } catch (e) {
       console.error('Failed to persist schools to localStorage', e);
     }
@@ -249,25 +271,32 @@ export default function App() {
     }, 4000);
   };
 
-  // Reset and clear all flagged learner data across all roles
+  // Reset and clear all data across all modules
   const handleResetAllData = () => {
     setSubmissions([]);
+    setRegisteredLearners([]);
+    setTutorAccounts([]);
     setSchools((prev) =>
       prev.map((s) => ({
         ...s,
+        totalStudents: 0,
+        masteredPercentage: 0,
         flaggedRedCount: 0,
         flaggedYellowCount: 0,
         resolvedCount: 0,
-        sections: s.sections.map((sec) => ({ ...sec, flagged: 0 })),
+        avgInterventionTimeMinutes: 0,
+        sections: s.sections.map((sec) => ({ ...sec, total: 0, flagged: 0 })),
       }))
     );
     try {
-      localStorage.removeItem('irip_submissions_v2');
-      localStorage.removeItem('irip_schools_v1');
+      localStorage.removeItem('irip_submissions_v3');
+      localStorage.removeItem('irip_registeredLearners_v2');
+      localStorage.removeItem('irip_tutorAccounts_v3');
+      localStorage.removeItem('irip_schools_v2');
     } catch (e) {
       console.error('Failed to clear localStorage keys', e);
     }
-    triggerToast('🔄 All flagged learner data has been reset and cleared! Starting fresh from the start.');
+    triggerToast('🔄 Application reset to initial clean state. All counters and data cleared!');
   };
 
   // Add submission from learner or simulation
@@ -341,7 +370,7 @@ export default function App() {
       studentId: `stu-sim-${Math.floor(Math.random() * 900 + 100)}`,
       studentName: chosenName,
       avatar: `https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?w=120&auto=format&fit=crop&q=80`,
-      section: 'Grade 5 - Mabini',
+      section: 'Grade 5 - Section A',
       gradeLevel: 'Grade 5',
       schoolName: 'Rizal Elementary School',
       sdoName: 'SDO Pasig City',
@@ -472,6 +501,8 @@ export default function App() {
           <SdoDashboard
             schools={schools}
             schoolHeadAccounts={schoolHeadAccounts}
+            submissions={submissions}
+            registeredLearners={registeredLearners}
             onResetAllData={handleResetAllData}
           />
         )}

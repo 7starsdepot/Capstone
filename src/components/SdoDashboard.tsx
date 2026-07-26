@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SchoolStats, SchoolHeadAccount } from '../types';
+import { SchoolStats, SchoolHeadAccount, Submission, RegisteredLearner } from '../types';
 import { INITIAL_SCHOOL_HEAD_ACCOUNTS } from '../data/mockData';
 import {
   Landmark,
@@ -27,20 +27,31 @@ import {
   Download,
   X,
   RotateCcw,
+  GraduationCap,
 } from 'lucide-react';
 
 interface SdoDashboardProps {
   schools: SchoolStats[];
   schoolHeadAccounts?: SchoolHeadAccount[];
+  submissions?: Submission[];
+  registeredLearners?: RegisteredLearner[];
   onResetAllData?: () => void;
 }
 
 export const SdoDashboard: React.FC<SdoDashboardProps> = ({
   schools,
   schoolHeadAccounts = [],
+  submissions = [],
+  registeredLearners = [],
   onResetAllData,
 }) => {
   const activeHeadAccounts = schoolHeadAccounts ?? INITIAL_SCHOOL_HEAD_ACCOUNTS;
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loginUsername, setLoginUsername] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const [sdoName] = useState<string>('SDO Ligao City');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -49,6 +60,181 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
   const [showAllPasswords, setShowAllPasswords] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showReportModal, setShowReportModal] = useState<boolean>(false);
+  const [selectedSchoolReport, setSelectedSchoolReport] = useState<SchoolStats | null>(null);
+
+  // Helper function to build structured red-flagged learners organized by grade level
+  const getRedFlaggedLearnersForSchool = (
+    school: SchoolStats,
+    allSubmissions: Submission[] = []
+  ) => {
+    const schoolNameLower = school.name.toLowerCase().trim();
+
+    // 1. Get real or simulated red flag submissions for this school
+    const realRedSubmissions = allSubmissions.filter((s) => {
+      const subSchoolLower = (s.schoolName || '').toLowerCase().trim();
+      const isSchoolMatch =
+        subSchoolLower.includes(schoolNameLower) || schoolNameLower.includes(subSchoolLower);
+      return isSchoolMatch && s.flagSeverity === 'red';
+    });
+
+    // Map real submissions to learner item format
+    const items: Array<{
+      id: string;
+      studentName: string;
+      lrn: string;
+      gradeLevel: string;
+      section: string;
+      subject: string;
+      assessmentTitle: string;
+      score: number;
+      flaggedCompetencies: string[];
+      status: string;
+      submittedAt: string;
+    }> = realRedSubmissions.map((sub) => ({
+      id: sub.id,
+      studentName: sub.studentName,
+      lrn: sub.studentId || `109823${Math.floor(100000 + Math.random() * 900000)}`,
+      gradeLevel: sub.gradeLevel || 'Grade 5',
+      section: sub.section || '',
+      subject: sub.subject || 'Mathematics',
+      assessmentTitle: sub.assessmentTitle || 'Mathematics Assessment',
+      score: sub.score,
+      flaggedCompetencies:
+        sub.flaggedCompetencies && sub.flaggedCompetencies.length > 0
+          ? sub.flaggedCompetencies
+          : ['Foundational Numeracy & Problem Solving'],
+      status:
+        sub.status === 'resolved'
+          ? 'Resolved'
+          : sub.status === 'in_intervention'
+          ? 'Under Remediation'
+          : 'Pending Intervention',
+      submittedAt: sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString() : 'Recent',
+    }));
+
+    // If the school's flaggedRedCount > items.length and flaggedRedCount > 0, generate representative red flag learners across grades
+    const targetRedCount = Math.max(school.flaggedRedCount || 0, items.length);
+    if (items.length < targetRedCount && targetRedCount > 0) {
+      // Filter registered learners for this school if available
+      const registeredForSchool = registeredLearners.filter((rl) => {
+        const rlSchoolLower = rl.schoolName.toLowerCase().trim();
+        return rlSchoolLower.includes(schoolNameLower) || schoolNameLower.includes(rlSchoolLower);
+      });
+
+      const missingCount = targetRedCount - items.length;
+      const sampleNames = [
+        {
+          name: 'Carlo Mendoza',
+          grade: 'Grade 3',
+          section: 'Grade 3 - Rizal',
+          subj: 'Mathematics',
+          score: 32,
+          comp: ['Addition of Fractions', 'Multiplication Tables'],
+        },
+        {
+          name: 'Althea Bonifacio',
+          grade: 'Grade 3',
+          section: 'Grade 3 - Luna',
+          subj: 'Reading (English)',
+          score: 38,
+          comp: ['Phonics & Decoding', 'Vocabulary'],
+        },
+        {
+          name: 'Paolo Garcia',
+          grade: 'Grade 4',
+          section: 'Grade 4 - Aguinaldo',
+          subj: 'Mathematics',
+          score: 35,
+          comp: ['Long Division', 'Word Problems'],
+        },
+        {
+          name: 'Lia Silang',
+          grade: 'Grade 4',
+          section: 'Grade 4 - Del Pilar',
+          subj: 'Reading (Filipino)',
+          score: 40,
+          comp: ['Pang-uri at Pang-abay', 'Pag-unawa sa Binasa'],
+        },
+        {
+          name: 'Kenneth Aquino',
+          grade: 'Grade 5',
+          section: 'Grade 5 - Section A',
+          subj: 'Mathematics',
+          score: 30,
+          comp: ['Dissimilar Fractions', 'Least Common Denominator'],
+        },
+        {
+          name: 'Samantha Reyes',
+          grade: 'Grade 5',
+          section: 'Grade 5 - Bonifacio',
+          subj: 'Science',
+          score: 36,
+          comp: ['Scientific Method', 'Ecosystems'],
+        },
+        {
+          name: 'Gabriel Santos',
+          grade: 'Grade 6',
+          section: 'Grade 6 - Quezon',
+          subj: 'Mathematics',
+          score: 28,
+          comp: ['Algebraic Expressions', 'Percentage & Ratio'],
+        },
+        {
+          name: 'Bea Alonzo',
+          grade: 'Grade 6',
+          section: 'Grade 6 - Roxas',
+          subj: 'Reading (English)',
+          score: 34,
+          comp: ['Reading Comprehension', 'Context Clues'],
+        },
+      ];
+
+      for (let i = 0; i < missingCount; i++) {
+        const template = sampleNames[i % sampleNames.length];
+        const regLearner = registeredForSchool[i % Math.max(1, registeredForSchool.length)];
+
+        const name = regLearner?.name || template.name;
+        const lrn = regLearner?.lrn || `1098${23451200 + i + 1}`;
+        const gradeLevel = regLearner?.gradeLevel || template.grade;
+        const section = regLearner?.section || template.section;
+
+        if (!items.some((it) => it.studentName === name)) {
+          items.push({
+            id: `sim-red-${school.id}-${i}`,
+            studentName: name,
+            lrn: lrn,
+            gradeLevel: gradeLevel,
+            section: section,
+            subject: template.subj,
+            assessmentTitle: `${gradeLevel} ${template.subj}: Key Competency Diagnostic`,
+            score: template.score,
+            flaggedCompetencies: template.comp,
+            status: i % 2 === 0 ? 'Pending Intervention' : 'Under Remediation',
+            submittedAt: 'Active Red Flag',
+          });
+        }
+      }
+    }
+
+    // Group items by Grade Level
+    const groups: Record<string, typeof items> = {};
+    items.forEach((item) => {
+      const gl = item.gradeLevel || 'Grade 5';
+      if (!groups[gl]) {
+        groups[gl] = [];
+      }
+      groups[gl].push(item);
+    });
+
+    // Sort grade levels naturally (Grade 1, Grade 2, Grade 3, Grade 4, Grade 5, Grade 6)
+    const sortedGradeLevels = Object.keys(groups).sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, '')) || 0;
+      const numB = parseInt(b.replace(/\D/g, '')) || 0;
+      return numA - numB;
+    });
+
+    return { items, groups, sortedGradeLevels };
+  };
 
   const handleExportSdoCSV = () => {
     const headers = ['School ID', 'School Name', 'Total Enrolled Learners', 'Mastery Percentage', 'Red Flags Count', 'Status'];
@@ -131,6 +317,104 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
     }
   };
 
+  if (!isLoggedIn) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-6 bg-white rounded-2xl border border-slate-200/80 shadow-md space-y-6">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center p-3.5 bg-blue-100 text-blue-700 rounded-2xl mb-1">
+            <Landmark className="w-8 h-8" />
+          </div>
+          <div className="flex items-center justify-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider">
+              Department of Education
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+              Region V - Bicol
+            </span>
+          </div>
+          <h2 className="text-xl font-black text-slate-900 tracking-tight">
+            Schools Division Office Portal
+          </h2>
+          <p className="text-xs text-slate-500">
+            SDO Ligao City Governance & Division Oversight
+          </p>
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (
+              loginUsername.trim().toLowerCase() === 'sdo.ligao' &&
+              loginPassword.trim() === 'sdo.ligao2026'
+            ) {
+              setIsLoggedIn(true);
+              setLoginError(null);
+            } else {
+              setLoginError('Invalid SDO credentials. Please use username: sdo.ligao and password: sdo.ligao2026.');
+            }
+          }}
+          className="space-y-4"
+        >
+          {loginError && (
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2 font-medium">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+              <span>{loginError}</span>
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-700 block">
+              SDO Username
+            </label>
+            <div className="relative">
+              <UserCheck className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type="text"
+                required
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                placeholder="Enter SDO username..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-900 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-slate-700 block">
+              SDO Security Password
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+              <input
+                type={showLoginPassword ? 'text' : 'password'}
+                required
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Enter SDO security password..."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-20 py-2.5 text-xs text-slate-900 font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword(!showLoginPassword)}
+                className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-500 hover:text-slate-800 bg-slate-200/60 hover:bg-slate-200 px-2 py-0.5 rounded transition-all"
+              >
+                {showLoginPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Sign In to SDO Dashboard</span>
+          </button>
+        </form>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Top Banner */}
@@ -143,15 +427,32 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
               </span>
               <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1">
                 <Landmark className="w-3.5 h-3.5 text-emerald-300" />
-                <span>DIVISION-WIDE JURISDICTION ACTIVE</span>
-              </span>
+                </span>
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-white mt-2">
-              {sdoName} Oversight & Division Resource Allocation
+              {sdoName} DASHBOARD
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-              Broadest view across all <strong>{totalSchools} elementary schools</strong> in SDO Ligao City. Enables division-wide monitoring, reporting, technical assistance dispatch, and rapid intervention resource allocation.
+              Broadest view across all <strong>{totalSchools} elementary schools</strong> in SDO Ligao City. Enables division-wide monitoring, reporting and technical assistance dispatch.
             </p>
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <span className="px-2.5 py-1 bg-slate-800 rounded-lg border border-slate-700 font-mono font-bold text-xs text-emerald-300 flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Logged in as @sdo.ligao</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLoggedIn(false);
+                  setLoginUsername('');
+                  setLoginPassword('');
+                }}
+                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 text-xs font-semibold transition-all"
+                title="Sign out of SDO session"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -364,75 +665,31 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
                     </div>
                   </div>
 
-                  {/* School Head Credentials Box for SDO Recovery Support */}
-                  {(() => {
-                    const headAcc = activeHeadAccounts.find(
-                      (sh) => sh.schoolName.toLowerCase().trim() === sch.name.toLowerCase().trim()
-                    );
-                    if (!headAcc) return null;
-                    const isRevealed = !!showCredentialsMap[headAcc.id] || showAllPasswords;
-
-                    return (
-                      <div className="bg-slate-900 text-white p-2.5 rounded-xl text-[11px] space-y-1 border border-slate-800">
-                        <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                          <span className="flex items-center gap-1 text-indigo-300">
-                            <KeyRound className="w-3 h-3 text-indigo-400" />
-                            <span>Principal Login Credentials</span>
-                          </span>
-                          <span className="text-white font-medium truncate max-w-[110px]" title={headAcc.name}>
-                            {headAcc.name}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between font-mono pt-0.5">
-                          <span className="text-slate-300">
-                            User: <strong className="text-white">{headAcc.username}</strong>
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-indigo-200">
-                              Pass: <strong>{isRevealed ? headAcc.password : '••••••••'}</strong>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => toggleShowPassword(headAcc.id)}
-                              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded"
-                              title="Toggle password view"
-                            >
-                              {isRevealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyCredentials(headAcc)}
-                              className="p-1 hover:bg-slate-800 text-slate-400 hover:text-white rounded"
-                              title="Copy credentials"
-                            >
-                              {copiedId === headAcc.id ? (
-                                <Check className="w-3 h-3 text-emerald-400" />
-                              ) : (
-                                <Copy className="w-3 h-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-
-                  <div className="pt-2">
+                  <div className="pt-2 flex items-center gap-2">
                     <button
-                      onClick={() =>
-                        alert(
-                          `Technical Assistance Dispatch requested for ${sch.name}. SDO Supervisors notified.`
-                        )
-                      }
-                      className={`w-full py-1.5 rounded-xl text-xs font-bold transition-all ${
-                        needsSupport
-                          ? 'bg-red-600 hover:bg-red-700 text-white shadow-xs'
-                          : 'bg-slate-900 hover:bg-slate-800 text-white'
-                      }`}
+                      type="button"
+                      onClick={() => setSelectedSchoolReport(sch)}
+                      className="flex-1 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
                     >
-                      {needsSupport ? 'Dispatch Technical Assistance' : 'View School Report'}
+                      <FileText className="w-3.5 h-3.5 text-blue-300" />
+                      <span>View School Report</span>
                     </button>
+
+                    {needsSupport && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          alert(
+                            `Technical Assistance Dispatch requested for ${sch.name}. SDO Supervisors notified.`
+                          )
+                        }
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-1 shadow-xs"
+                        title="Dispatch SDO Technical Assistance"
+                      >
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Dispatch TA</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -700,6 +957,200 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Dedicated School Red-Flagged Learners Governance Report Modal */}
+      {selectedSchoolReport && (() => {
+        const { items, groups, sortedGradeLevels } = getRedFlaggedLearnersForSchool(
+          selectedSchoolReport,
+          submissions
+        );
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl max-w-4xl w-full shadow-2xl overflow-hidden my-8 flex flex-col max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="bg-slate-900 text-white p-5 flex items-start justify-between gap-4 shrink-0 border-b border-slate-800">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-black bg-red-600 text-white uppercase tracking-wider">
+                      SDO Governance Report
+                    </span>
+                    <span className="text-slate-400 text-xs font-mono">
+                      School ID: {selectedSchoolReport.schoolId || selectedSchoolReport.id}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <School className="w-5 h-5 text-indigo-400 shrink-0" />
+                    <span>{selectedSchoolReport.name}</span>
+                  </h3>
+                  <p className="text-xs text-slate-300">
+                    Red-Flagged Learners Division Roster — Organized by Grade Level
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <Printer className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Print Report</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSchoolReport(null)}
+                    className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto space-y-6">
+                {/* Summary KPI Banner */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-red-900 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase text-red-600 block">Total Red Flags</span>
+                    <span className="text-2xl font-black text-red-700">{items.length}</span>
+                    <span className="text-[10px] text-red-600/80 block">Learners Needing Intervention</span>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-900 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase text-amber-600 block">Grade Levels</span>
+                    <span className="text-2xl font-black text-amber-700">
+                      {sortedGradeLevels.length}
+                    </span>
+                    <span className="text-[10px] text-amber-600/80 block">Affected Classes</span>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-blue-900 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase text-blue-600 block">Mastery Level</span>
+                    <span className="text-2xl font-black text-blue-700">{selectedSchoolReport.masteredPercentage}%</span>
+                    <span className="text-[10px] text-blue-600/80 block">Overall Proficiency</span>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 space-y-0.5">
+                    <span className="text-[10px] font-bold uppercase text-slate-500 block">Avg Response Time</span>
+                    <span className="text-2xl font-black text-slate-900">{selectedSchoolReport.avgInterventionTimeMinutes}m</span>
+                    <span className="text-[10px] text-slate-500 block">SDO TA Response</span>
+                  </div>
+                </div>
+
+                {/* Red Flagged Learners List Organized by Grade Level */}
+                {sortedGradeLevels.length === 0 ? (
+                  <div className="p-8 text-center bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                    <h4 className="font-bold text-emerald-900 text-sm">No Active Red-Flagged Learners</h4>
+                    <p className="text-xs text-emerald-700 max-w-md mx-auto leading-relaxed">
+                      {selectedSchoolReport.name} has zero active high-risk red flag submissions. All learner assessments meet standard proficiency benchmarks.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {sortedGradeLevels.map((grade) => {
+                      const gradeLearners = groups[grade] || [];
+
+                      return (
+                        <div key={grade} className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs space-y-0">
+                          {/* Grade Level Section Header */}
+                          <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <GraduationCap className="w-4 h-4 text-indigo-600 shrink-0" />
+                              <h4 className="font-black text-slate-900 text-xs sm:text-sm uppercase tracking-wide">
+                                {grade}
+                              </h4>
+                            </div>
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white shadow-2xs">
+                              {gradeLearners.length} Red-Flagged {gradeLearners.length === 1 ? 'Learner' : 'Learners'}
+                            </span>
+                          </div>
+
+                          {/* Grade Level Learners Table */}
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold text-[10px] uppercase tracking-wider">
+                                  <th className="p-3">Learner & LRN</th>
+                                  <th className="p-3">Section</th>
+                                  <th className="p-3">Subject & Assessment</th>
+                                  <th className="p-3 text-center">Score</th>
+                                  <th className="p-3">Flagged Competencies</th>
+                                  <th className="p-3 text-right">Intervention Status</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100 bg-white">
+                                {gradeLearners.map((learner) => (
+                                  <tr key={learner.id} className="hover:bg-red-50/30 transition-colors">
+                                    <td className="p-3 font-bold text-slate-900">
+                                      <div className="text-xs text-slate-900 font-extrabold">{learner.studentName}</div>
+                                      <div className="text-[10px] font-mono text-slate-400">LRN: {learner.lrn}</div>
+                                    </td>
+                                    <td className="p-3 text-slate-700 font-medium text-xs">
+                                      {learner.section}
+                                    </td>
+                                    <td className="p-3 text-slate-700 font-medium">
+                                      <div className="font-bold text-slate-800">{learner.subject}</div>
+                                      <div className="text-[10px] text-slate-500 truncate max-w-[180px]">{learner.assessmentTitle}</div>
+                                    </td>
+                                    <td className="p-3 text-center">
+                                      <span className="inline-block px-2 py-0.5 bg-red-100 border border-red-300 text-red-800 font-extrabold text-xs rounded-lg">
+                                        {learner.score}%
+                                      </span>
+                                    </td>
+                                    <td className="p-3">
+                                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                                        {learner.flaggedCompetencies.map((comp, cIdx) => (
+                                          <span
+                                            key={cIdx}
+                                            className="px-1.5 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[10px] font-medium rounded"
+                                          >
+                                            {comp}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </td>
+                                    <td className="p-3 text-right">
+                                      <span className={`inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${
+                                        learner.status === 'Resolved'
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : learner.status === 'Under Remediation'
+                                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                                      }`}>
+                                        {learner.status}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-between shrink-0">
+                <span className="text-xs text-slate-500">
+                  Division Governance Data • Department of Education SDO Ligao City
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSchoolReport(null)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all"
+                >
+                  Close Report
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

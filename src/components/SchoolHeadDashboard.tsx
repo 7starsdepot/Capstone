@@ -99,7 +99,7 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
   const [newTutorName, setNewTutorName] = useState<string>('');
   const [newUsername, setNewUsername] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
-  const [newSection, setNewSection] = useState<string>('Grade 5 - Mabini');
+  const [newSection, setNewSection] = useState<string>('');
   const [newGradeLevel, setNewGradeLevel] = useState<string>('Grade 5');
   const [showPasswords, setShowPasswords] = useState<boolean>(true);
 
@@ -119,10 +119,7 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
         flaggedYellowCount: 18,
         resolvedCount: 22,
         avgInterventionTimeMinutes: 4.0,
-        sections: [
-          { name: 'Grade 5 - Section A', tutor: 'Assigned Tutor', total: 42, flagged: 6 },
-          { name: 'Grade 5 - Section B', tutor: 'Assigned Tutor', total: 40, flagged: 4 },
-        ],
+        sections: [],
       }
     );
   }, [schools, loggedHead]);
@@ -860,7 +857,7 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
               </label>
               <input
                 type="text"
-                placeholder="e.g. Grade 5 - Mabini"
+                placeholder="e.g. Grade 5 - Section A"
                 value={newSection}
                 onChange={(e) => setNewSection(e.target.value)}
                 className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 text-xs focus:ring-2 focus:ring-indigo-500 font-medium"
@@ -988,7 +985,9 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
                       <span>{getStudentDisplayName(sub.studentName, sub.studentId)}</span>
                     </td>
                     <td className="p-3 text-slate-600 font-medium">{sub.section}</td>
-                    <td className="p-3 text-slate-900 font-semibold">{sub.subject}</td>
+                    <td className="p-3 text-slate-900 font-semibold">
+                      {sub.flaggedCompetencies?.length ? sub.flaggedCompetencies.join(', ') : sub.assessmentTitle || sub.subject}
+                    </td>
                     <td className="p-3 text-center font-bold">
                       <span
                         className={`px-2 py-0.5 rounded text-[11px] ${

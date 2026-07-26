@@ -40,6 +40,7 @@ import {
   ChevronDown,
   ChevronUp,
   Eye,
+  EyeOff,
   ExternalLink,
   Check,
   BarChart2,
@@ -105,8 +106,9 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
   onResetAllData,
 }) => {
   const [loggedTutor, setLoggedTutor] = useState<TutorAccount | null>(null);
-  const [loginUsername, setLoginUsername] = useState<string>('elena.ramos');
-  const [loginPassword, setLoginPassword] = useState<string>('111770PINITES');
+  const [loginUsername, setLoginUsername] = useState<string>('');
+  const [loginPassword, setLoginPassword] = useState<string>('');
+  const [showLoginPassword, setShowLoginPassword] = useState<boolean>(false);
   const [loginError, setLoginError] = useState<string | null>(null);
 
   const [filterSeverity, setFilterSeverity] = useState<'all' | 'red' | 'yellow' | 'resolved'>('all');
@@ -122,7 +124,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
       password: '111770PINITES',
       name: 'Teacher Ma. Elena Ramos',
       schoolName: 'PINIT ELEMENTARY SCHOOL',
-      section: 'Grade 5 - Mabini',
+      section: '',
       gradeLevel: 'Grade 5',
       createdAt: new Date().toISOString(),
     };
@@ -608,7 +610,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
   const handleEncodeSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
-    const sec = newSection.trim() || 'Grade 5 - Mabini';
+    const sec = newSection.trim();
     const inferredGrade = sec.toLowerCase().includes('grade 4')
       ? 'Grade 4'
       : sec.toLowerCase().includes('grade 6')
@@ -649,7 +651,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
       const parts = line.split(',').map((p) => p.trim());
       if (parts.length >= 2) {
         const name = parts[0];
-        const section = parts[1] || 'Grade 5 - Mabini';
+        const section = parts[1] || '';
         const lrn = parts[2] || `${Math.floor(100000000000 + Math.random() * 900000000000)}`;
         if (name && name.toLowerCase() !== 'name') {
           onAddLearner({
@@ -865,7 +867,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
               <input
                 type="text"
                 required
-                placeholder="e.g. elena.ramos"
+                placeholder=" "
                 value={loginUsername}
                 onChange={(e) => setLoginUsername(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -878,13 +880,25 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input
-                type="password"
+                type={showLoginPassword ? 'text' : 'password'}
                 required
                 placeholder="Enter password..."
                 value={loginPassword}
                 onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl pl-9 pr-10 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowLoginPassword(!showLoginPassword)}
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors"
+                title={showLoginPassword ? 'Hide password' : 'Show password'}
+              >
+                {showLoginPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -1741,7 +1755,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Grade 5 - Mabini"
+                    placeholder="e.g. Grade 5 - Section A"
                     value={newSection}
                     onChange={(e) => setNewSection(e.target.value)}
                     className="w-full bg-white border border-slate-200 text-slate-900 rounded-lg p-2 text-xs focus:ring-2 focus:ring-emerald-500 font-medium"
@@ -2026,7 +2040,9 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
 
                     {/* Quiz & Score summary row */}
                     <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                      <span className="font-medium truncate max-w-[180px]">{sub.subject}</span>
+                      <span className="font-medium truncate max-w-[180px]">
+                        {sub.flaggedCompetencies?.length ? sub.flaggedCompetencies.join(', ') : sub.assessmentTitle || sub.subject}
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-900">{sub.score}% Score</span>
                         <span className="text-[10px] text-slate-400">({minutesAgo}m ago)</span>
@@ -2866,7 +2882,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
               rows={6}
               value={batchCsvText}
               onChange={(e) => setBatchCsvText(e.target.value)}
-              placeholder={`Carlo Mendoza, Grade 5 - Mabini, 109823451201\nAlthea Bonifacio, Grade 5 - Mabini, 109823451202\nJuan Dela Cruz, Grade 5 - Rizal, 109823451209`}
+              placeholder={`Carlo Mendoza, Grade 5 - Section A, 109823451201\nAlthea Bonifacio, Grade 5 - Section A, 109823451202\nJuan Dela Cruz, Grade 5 - Section B, 109823451209`}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-mono focus:ring-2 focus:ring-emerald-500"
             />
 
@@ -2875,7 +2891,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                 type="button"
                 onClick={() =>
                   setBatchCsvText(
-                    `Kenneth Aquino, Grade 5 - Mabini, 109823451205\nJanelle Cruz, Grade 5 - Rizal, 109823451206\nPaolo Garcia, Grade 5 - Bonifacio, 109823451207`
+                    `Kenneth Aquino, Grade 5 - Section A, 109823451205\nJanelle Cruz, Grade 5 - Section B, 109823451206\nPaolo Garcia, Grade 5 - Section C, 109823451207`
                   )
                 }
                 className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1"

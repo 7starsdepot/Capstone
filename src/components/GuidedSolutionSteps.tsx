@@ -10,6 +10,7 @@ interface GuidedSolutionStepsProps {
   showValidation?: boolean;
   title?: string;
   subtitle?: string;
+  hideNotificationBadges?: boolean;
 }
 
 // Fallback generator if a question doesn't have custom guidedSteps explicitly declared
@@ -77,6 +78,7 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
   showValidation = false,
   title = 'Guided Solution Framework (Fill-in-the-Blank)',
   subtitle = 'Complete the missing values or steps in the solution framework below:',
+  hideNotificationBadges = false,
 }) => {
   const guidedSteps = getGuidedStepsForQuestion(question);
 
@@ -262,7 +264,7 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
                         />
 
                         {/* Real-Time Instant Feedback Icon & Badge */}
-                        {isBlankFilled && (
+                        {isBlankFilled && !hideNotificationBadges && (
                           <div className="flex items-center gap-1 shrink-0">
                             {isBlankCorrect ? (
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-md shadow-2xs font-sans">
