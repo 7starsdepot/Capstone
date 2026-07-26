@@ -240,6 +240,16 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
 
   const handleExportSchoolHeadCSV = () => {
     if (!loggedHead) return;
+    const metadata = [
+      `"REPUBLIC OF THE PHILIPPINES - DEPARTMENT OF EDUCATION"`,
+      `"REGION V - BICOL • SCHOOLS DIVISION OFFICE OF LIGAO CITY"`,
+      `"SCHOOL LITERACY & NUMERACY INTERVENTION GOVERNANCE REPORT"`,
+      `"School Name: ${loggedHead.schoolName}"`,
+      `"School ID: ${loggedHead.schoolId}"`,
+      `"School Principal / Head of School: ${loggedHead.name}"`,
+      `"Report Generated Date: ${new Date().toLocaleDateString('en-US')}"`,
+      `""`
+    ];
     const headers = ['Learner Name', 'Grade & Section', 'Assessment Title', 'Score', 'Max Score', 'Percentage', 'Flag Severity', 'Status', 'Submitted At'];
     const rows = schoolSubmissions.map((s) => [
       isAnonymized ? `Learner #${s.id.slice(-4)}` : s.studentName,
@@ -253,7 +263,7 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
       s.submittedAt ? new Date(s.submittedAt).toLocaleDateString() : 'N/A',
     ]);
     const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
+      + [...metadata, headers.join(','), ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -1083,8 +1093,11 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
                 <p className="text-xs font-medium text-slate-600">
                   School Name: <strong className="text-slate-900">{loggedHead.schoolName}</strong> • School ID: <strong className="font-mono text-slate-900">{loggedHead.schoolId}</strong>
                 </p>
-                <p className="text-[11px] text-slate-500">
-                  School Head / Principal: <strong>{loggedHead.name}</strong> • Date Generated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                <p className="text-xs font-bold text-indigo-900 bg-indigo-50/80 px-3 py-1 rounded-lg border border-indigo-200/80 inline-block mt-1">
+                  School Principal / Head (Encoded in Profile): <span className="text-indigo-950 font-extrabold uppercase">{loggedHead.name}</span>
+                </p>
+                <p className="text-[11px] text-slate-500 block mt-0.5">
+                  Report Date Generated: <strong>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>
                 </p>
               </div>
 
@@ -1173,14 +1186,20 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
               {/* Signature Footer */}
               <div className="pt-8 border-t border-slate-200 grid grid-cols-2 gap-8 text-xs text-slate-700">
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Prepared By:</p>
-                  <div className="mt-8 border-b border-slate-900 w-48 font-bold text-slate-900">{loggedHead.name}</div>
-                  <p className="text-[10px] text-slate-500 mt-1">School Head / Principal ({loggedHead.schoolName})</p>
+                  <p className="text-[10px] uppercase font-extrabold text-slate-400">Prepared & Approved By:</p>
+                  <div className="mt-8 border-b-2 border-slate-900 w-56 font-black text-slate-900 text-sm tracking-tight uppercase">
+                    {loggedHead.name}
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 mt-1">School Principal / School Head</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{loggedHead.schoolName} • ID: {loggedHead.schoolId}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Submitted To:</p>
-                  <div className="mt-8 border-b border-slate-900 w-48 font-bold text-slate-900">SDO Division Supervisor</div>
-                  <p className="text-[10px] text-slate-500 mt-1">Schools Division Office - Ligao City</p>
+                  <p className="text-[10px] uppercase font-extrabold text-slate-400">Submitted To:</p>
+                  <div className="mt-8 border-b-2 border-slate-900 w-56 font-black text-slate-900 text-sm tracking-tight uppercase">
+                    SDO Division Supervisor
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 mt-1">Division Governance & Technical Assistance</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Schools Division Office - Ligao City</p>
                 </div>
               </div>
             </div>

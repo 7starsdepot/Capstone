@@ -238,15 +238,22 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
   };
 
   const handleExportSdoCSV = () => {
-    const headers = ['School ID', 'School Name', 'Total Enrolled Learners', 'Mastery Percentage', 'Red Flags Count', 'Status'];
-    const rows = schools.map((s) => [
-      s.id,
-      s.name,
-      s.totalStudents,
-      `${s.masteredPercentage}%`,
-      s.flaggedRedCount,
-      s.flaggedRedCount > 3 ? 'NEEDS ASSISTANCE' : 'PERFORMING',
-    ]);
+    const headers = ['School ID', 'School Name', 'School Principal / Head', 'Total Enrolled Learners', 'Mastery Percentage', 'Red Flags Count', 'Status'];
+    const rows = schools.map((s) => {
+      const headAccount = activeHeadAccounts.find(
+        (h) => h.schoolName.toLowerCase().trim() === s.name.toLowerCase().trim()
+      );
+      const principalName = headAccount ? headAccount.name : 'School Principal';
+      return [
+        s.id,
+        s.name,
+        principalName,
+        s.totalStudents,
+        `${s.masteredPercentage}%`,
+        s.flaggedRedCount,
+        s.flaggedRedCount > 3 ? 'NEEDS ASSISTANCE' : 'PERFORMING',
+      ];
+    });
     const csvContent = "data:text/csv;charset=utf-8," 
       + [headers.join(','), ...rows.map(e => e.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
@@ -907,6 +914,7 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
                       <tr>
                         <th className="p-2.5">School Name</th>
                         <th className="p-2.5">School ID</th>
+                        <th className="p-2.5">School Principal / Head</th>
                         <th className="p-2.5">Enrolled Learners</th>
                         <th className="p-2.5">Mastery %</th>
                         <th className="p-2.5">Red Flags Count</th>
@@ -914,26 +922,33 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-200 text-slate-800">
-                      {schools.map((sch) => (
-                        <tr key={sch.id} className="hover:bg-slate-50">
-                          <td className="p-2.5 font-bold text-slate-900">{sch.name}</td>
-                          <td className="p-2.5 font-mono text-[11px] text-slate-600">{sch.id}</td>
-                          <td className="p-2.5">{sch.totalStudents.toLocaleString()}</td>
-                          <td className="p-2.5 font-bold text-emerald-700">{sch.masteredPercentage}%</td>
-                          <td className="p-2.5 font-bold text-red-700">{sch.flaggedRedCount}</td>
-                          <td className="p-2.5">
-                            {sch.flaggedRedCount > 3 ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-100 text-red-800 border border-red-300">
-                                TECHNICAL ASSISTANCE NEEDED
-                              </span>
-                            ) : (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                PERFORMING
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {schools.map((sch) => {
+                        const headAcc = activeHeadAccounts.find(
+                          (h) => h.schoolName.toLowerCase().trim() === sch.name.toLowerCase().trim()
+                        );
+                        const principalName = headAcc ? headAcc.name : 'School Principal';
+                        return (
+                          <tr key={sch.id} className="hover:bg-slate-50">
+                            <td className="p-2.5 font-bold text-slate-900">{sch.name}</td>
+                            <td className="p-2.5 font-mono text-[11px] text-slate-600">{sch.id}</td>
+                            <td className="p-2.5 font-semibold text-slate-800">{principalName}</td>
+                            <td className="p-2.5">{sch.totalStudents.toLocaleString()}</td>
+                            <td className="p-2.5 font-bold text-emerald-700">{sch.masteredPercentage}%</td>
+                            <td className="p-2.5 font-bold text-red-700">{sch.flaggedRedCount}</td>
+                            <td className="p-2.5">
+                              {sch.flaggedRedCount > 3 ? (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black bg-red-100 text-red-800 border border-red-300">
+                                  TECHNICAL ASSISTANCE NEEDED
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                  PERFORMING
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

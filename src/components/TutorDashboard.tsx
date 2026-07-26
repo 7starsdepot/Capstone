@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Assessment, InterventionStrategy, Question, Submission, RegisteredLearner, TutorAccount } from '../types';
 import { GuidedSolutionSteps } from './GuidedSolutionSteps';
+import { INITIAL_SCHOOL_HEAD_ACCOUNTS } from '../data/mockData';
 import {
   BarChart,
   Bar,
@@ -3052,9 +3053,12 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                   <p className="text-[10px] text-slate-500 mt-1">Assigned Reading & Math Tutor</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-slate-400">Verified By:</p>
-                  <div className="mt-8 border-b border-slate-900 w-48 font-bold text-slate-900">School Principal / Head</div>
-                  <p className="text-[10px] text-slate-500 mt-1">{activeTutor.schoolName}</p>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Verified & Approved By:</p>
+                  <div className="mt-8 border-b border-slate-900 w-52 font-extrabold text-slate-900 uppercase">
+                    {INITIAL_SCHOOL_HEAD_ACCOUNTS.find(h => h.schoolName.toLowerCase().trim() === activeTutor.schoolName.toLowerCase().trim())?.name || 'School Principal'}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-700 mt-1">School Principal / School Head</p>
+                  <p className="text-[10px] text-slate-500">{activeTutor.schoolName}</p>
                 </div>
               </div>
             </div>
