@@ -412,8 +412,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
                 SDO Ligao City Student Kiosk
               </span>
-              <span className="text-xs text-slate-500 font-medium hidden sm:inline">DepEd Division Assessment</span>
-            </div>
+             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 mt-1">{activeAssessment?.title}</h2>
           </div>
 
