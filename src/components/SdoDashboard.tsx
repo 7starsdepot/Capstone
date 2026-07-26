@@ -358,7 +358,7 @@ export const SdoDashboard: React.FC<SdoDashboardProps> = ({
               setIsLoggedIn(true);
               setLoginError(null);
             } else {
-              setLoginError('Invalid SDO credentials. Please use username: sdo.ligao and password: sdo.ligao2026.');
+              setLoginError('Invalid SDO username or security password. Please check your credentials and try again.');
             }
           }}
           className="space-y-4"
