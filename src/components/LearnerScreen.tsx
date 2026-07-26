@@ -410,9 +410,9 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
-                Tablet Student Kiosk
+                SDO Ligao City Student Kiosk
               </span>
-              <span className="text-xs text-slate-500">DepEd Competency Assessment</span>
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline">DepEd Division Assessment</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 mt-1">{activeAssessment?.title}</h2>
           </div>
@@ -680,6 +680,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
                 title="Guided Solution Framework (Fill in the blanks)"
                 subtitle="The solution framework is provided below. Complete the missing values or steps as you solve:"
                 hideNotificationBadges={true}
+                isLearnerDashboard={true}
               />
 
               {/* Extra Scratchpad Text Note */}
@@ -759,7 +760,9 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
               Assessment Submitted
             </span>
             <h3 className="text-2xl font-bold text-slate-900 mt-2">
-              Great Effort, {studentNameInput}!
+              {latestSubmission?.score === 100
+                ? `Outstanding Job, ${studentNameInput}!`
+                : `Great Effort, ${studentNameInput}!`}
             </h3>
             <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
               Your step-by-step solution breakdown and answers have been analyzed and transmitted to your Tutor.
@@ -799,9 +802,9 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
                 )}
               </div>
               <p className="text-[11px] text-slate-500 mt-1">
-                {latestSubmission?.score && latestSubmission.score >= 75
-                  ? 'Keep up the excellent work!'
-                  : 'Your tutor will guide you with a fun activity!'}
+                {latestSubmission?.score === 100
+                  ? 'Outstanding Job! You answered all questions and solution steps correctly.'
+                  : 'Nice work! You completed all the solution steps. Some of your answers are not yet correct. Please review the highlighted steps and try again.'}
               </p>
             </div>
           </div>
@@ -975,6 +978,7 @@ export const LearnerScreen: React.FC<LearnerScreenProps> = ({
                         title="Learner's Solution Steps Performance"
                         subtitle="Framework evaluation of filled-in blanks:"
                         hideNotificationBadges={true}
+                        isLearnerDashboard={true}
                       />
 
                       {/* Diagnostic Misconception Breakdown */}

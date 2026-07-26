@@ -1,6 +1,6 @@
 import React from 'react';
 import { GuidedStep, Question, StepBlank } from '../types';
-import { Footprints, CheckCircle2, XCircle, Sparkles, Check } from 'lucide-react';
+import { Footprints, CheckCircle2, XCircle, Sparkles, Check, AlertCircle } from 'lucide-react';
 
 interface GuidedSolutionStepsProps {
   question: Question;
@@ -11,6 +11,7 @@ interface GuidedSolutionStepsProps {
   title?: string;
   subtitle?: string;
   hideNotificationBadges?: boolean;
+  isLearnerDashboard?: boolean;
 }
 
 // Fallback generator if a question doesn't have custom guidedSteps explicitly declared
@@ -79,12 +80,13 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
   title = 'Guided Solution Framework (Fill-in-the-Blank)',
   subtitle = 'Complete the missing values or steps in the solution framework below:',
   hideNotificationBadges = false,
+  isLearnerDashboard = false,
 }) => {
   const guidedSteps = getGuidedStepsForQuestion(question);
 
   if (guidedSteps.length === 0) return null;
 
-  // Calculate completion
+  // Calculate completion and correctness
   let totalBlanks = 0;
   let filledBlanks = 0;
   let correctBlanks = 0;
@@ -102,7 +104,10 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
     });
   });
 
-  const isComplete = totalBlanks > 0 && filledBlanks === totalBlanks;
+  const isAllComplete = totalBlanks > 0 && filledBlanks === totalBlanks;
+  const isAllCorrect = totalBlanks > 0 && filledBlanks === totalBlanks && correctBlanks === totalBlanks;
+  const hasIncorrect = totalBlanks > 0 && filledBlanks === totalBlanks && correctBlanks < totalBlanks;
+  const isIncomplete = totalBlanks > 0 && filledBlanks < totalBlanks;
 
   return (
     <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-4 sm:p-5 space-y-4 text-slate-800">
@@ -166,18 +171,29 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
 
       {/* Steps List */}
       <div className="space-y-3.5">
-        {guidedSteps.map((step, stepIdx) => {
-          // Check if step is fully completed
+        {guidedSteps.map((step) => {
+          // Check if step is fully completed and correct
           const isStepCompleted = step.blanks.every(
             (b) => (userBlankAnswers[b.id] || '').trim() !== ''
           );
+          const isStepCorrect = step.blanks.every(
+            (b) => (userBlankAnswers[b.id] || '').trim().toLowerCase() === b.correctValue.trim().toLowerCase()
+          );
+          const hasAttemptedStep = step.blanks.some(
+            (b) => (userBlankAnswers[b.id] || '').trim() !== ''
+          );
+
+          const showStepCorrect = isStepCorrect && isStepCompleted;
+          const showStepIncorrect = (showValidation || isReadOnly || hasAttemptedStep) && !isStepCorrect && isStepCompleted;
 
           return (
             <div
               key={step.stepNumber}
               className={`bg-white border rounded-xl p-4 space-y-3 shadow-2xs transition-all ${
-                isStepCompleted
+                showStepCorrect
                   ? 'border-emerald-300 ring-1 ring-emerald-200/50'
+                  : showStepIncorrect
+                  ? 'border-red-300 ring-1 ring-red-200/50 bg-red-50/20'
                   : 'border-slate-200 hover:border-blue-300'
               }`}
             >
@@ -186,8 +202,10 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
                 <div className="flex items-center gap-2">
                   <span
                     className={`w-6 h-6 rounded-full font-bold text-xs flex items-center justify-center shrink-0 ${
-                      isStepCompleted
+                      showStepCorrect
                         ? 'bg-emerald-600 text-white'
+                        : showStepIncorrect
+                        ? 'bg-red-600 text-white'
                         : 'bg-blue-600 text-white'
                     }`}
                   >
@@ -199,8 +217,22 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
                 </div>
 
                 {isStepCompleted && !showValidation && (
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-600 stroke-[3]" /> Step Completed
+                  <span
+                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
+                      isStepCorrect
+                        ? 'text-emerald-700 bg-emerald-50 border border-emerald-200'
+                        : 'text-red-700 bg-red-50 border border-red-200'
+                    }`}
+                  >
+                    {isStepCorrect ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-600 stroke-[3]" /> Step Completed
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-3 h-3 text-red-600" /> Review Step
+                      </>
+                    )}
                   </span>
                 )}
               </div>
@@ -303,14 +335,38 @@ export const GuidedSolutionSteps: React.FC<GuidedSolutionStepsProps> = ({
         })}
       </div>
 
-      {/* Encouragement Banner when fully completed */}
-      {isComplete && !isReadOnly && !showValidation && (
-        <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3 text-xs text-emerald-900 font-bold flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-600" />
-            <span>🎉 Outstanding job! You completed all solution steps!</span>
-          </div>
-          <span className="text-[11px] font-normal text-emerald-800">Ready to select your final answer option above.</span>
+      {/* Learner Solution Steps Feedback Banner */}
+      {isLearnerDashboard && totalBlanks > 0 && (
+        <div className="pt-2">
+          {isAllCorrect ? (
+            <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 text-xs text-emerald-950 font-bold flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <span>Outstanding Job! You completed all solution steps correctly.</span>
+              </div>
+              <span className="text-[11px] font-semibold text-emerald-800 shrink-0">
+                All steps correct!
+              </span>
+            </div>
+          ) : hasIncorrect ? (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-3.5 text-xs text-amber-950 font-bold flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-start sm:items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
+                <span className="leading-relaxed">
+                  Nice work! You completed all the solution steps. Some of your answers are not yet correct. Please review the highlighted steps and try again.
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-950 font-bold flex items-center justify-between gap-2 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <Footprints className="w-5 h-5 text-blue-600 shrink-0" />
+                <span>
+                  Please complete all remaining solution steps before submitting. ({filledBlanks}/{totalBlanks} steps completed)
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

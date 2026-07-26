@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { SchoolStats, Submission, TutorAccount, SchoolHeadAccount } from '../types';
 import { INITIAL_SCHOOL_HEAD_ACCOUNTS } from '../data/mockData';
+import { SdoLogo } from './SdoLogo';
 import {
   Building2,
   Lock,
@@ -1072,10 +1073,13 @@ export const SchoolHeadDashboard: React.FC<SchoolHeadDashboardProps> = ({
             {/* Printable Report Content */}
             <div className="p-6 overflow-y-auto space-y-6 text-slate-900 font-sans">
               {/* DepEd Header */}
-              <div className="text-center pb-4 border-b border-slate-200 space-y-1">
+              <div className="text-center pb-4 border-b border-slate-200 space-y-2">
+                <div className="flex justify-center mb-1">
+                  <SdoLogo className="w-16 h-16 drop-shadow-xs" />
+                </div>
                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Republic of the Philippines • Department of Education</p>
                 <p className="text-[11px] font-semibold text-slate-600">Region V - Bicol • Schools Division Office of Ligao City</p>
-                <h2 className="text-lg font-black text-slate-900 mt-2 uppercase tracking-tight">School Literacy & Numeracy Intervention Governance Report</h2>
+                <h2 className="text-lg font-black text-slate-900 mt-1 uppercase tracking-tight">School Literacy & Numeracy Intervention Governance Report</h2>
                 <p className="text-xs font-medium text-slate-600">
                   School Name: <strong className="text-slate-900">{loggedHead.schoolName}</strong> • School ID: <strong className="font-mono text-slate-900">{loggedHead.schoolId}</strong>
                 </p>

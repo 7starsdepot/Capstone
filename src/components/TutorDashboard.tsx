@@ -841,8 +841,8 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
     return (
       <div className="max-w-md mx-auto my-12 bg-white border border-slate-200/90 rounded-2xl shadow-xl overflow-hidden animate-fade-in">
         {/* Login Header */}
-        <div className="bg-slate-900 text-white p-6 border-b border-slate-800 text-center">
-          <div className="w-12 h-12 bg-blue-600/20 border border-blue-500/40 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+        <div className="bg-slate-900 text-white p-6 border-b border-slate-800 text-center space-y-2">
+          <div className="w-12 h-12 bg-blue-600/20 border border-blue-500/40 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-inner">
             <Lock className="w-6 h-6" />
           </div>
           <h2 className="text-xl font-extrabold tracking-tight">DepEd Tutor Authentication</h2>
@@ -2965,7 +2965,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
               <div className="text-center pb-4 border-b border-slate-200 space-y-1">
                 <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Republic of the Philippines • Department of Education</p>
                 <p className="text-[11px] font-semibold text-slate-600">Region V - Bicol • Schools Division Office of Ligao City</p>
-                <h2 className="text-lg font-black text-slate-900 mt-2 uppercase tracking-tight">Tutor Class Assessment & Learner Progress Report</h2>
+                <h2 className="text-lg font-black text-slate-900 mt-1 uppercase tracking-tight">Tutor Class Assessment & Learner Progress Report</h2>
                 <p className="text-xs font-medium text-slate-600">
                   School Profile: <strong className="text-slate-900">{activeTutor.schoolName}</strong> • Class Section: <strong className="text-slate-900">{activeTutor.section}</strong>
                 </p>

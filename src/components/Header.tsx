@@ -1,12 +1,12 @@
 import React from 'react';
 import { UserRole } from '../types';
+import { SdoLogo } from './SdoLogo';
 import {
   GraduationCap,
   Users,
   Building2,
   Landmark,
   BellRing,
-  Shield,
   Award,
 } from 'lucide-react';
 
@@ -44,9 +44,9 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-3.5">
           {/* Official DepEd Brand Header */}
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 flex items-center justify-center text-white shadow-sm border border-blue-500/30 shrink-0">
-              <Shield className="w-5 h-5 text-amber-300" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="p-1 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/20 shadow-md shrink-0">
+              <SdoLogo className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-md" />
             </div>
             <div className="space-y-0.5">
               <div className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Department of Education • Region V • SDO Ligao City
                 </span>
                 <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-extrabold bg-blue-900/80 text-blue-200 border border-blue-700/50 uppercase tracking-widest">
-                  <Award className="w-2.5 h-2.5 text-amber-300" /> Official Governance Portal
+                  <Award className="w-2.5 h-2.5 text-amber-300" /> 
                 </span>
               </div>
               <h1 className="font-extrabold text-white text-base sm:text-lg lg:text-xl tracking-tight flex items-center gap-2">
