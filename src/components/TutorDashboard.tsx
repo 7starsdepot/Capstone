@@ -155,21 +155,59 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
     setLoginError(null);
   };
 
-  // Registered Learners strictly belonging to the active tutor's assigned school profile
+  // Registered Learners strictly belonging to the active tutor
   const tutorClassRegisteredLearners = useMemo(() => {
     return registeredLearners.filter((l) => {
+      // 1. If explicitly assigned to a different tutor, exclude
+      if (l.assignedTutorId && l.assignedTutorId !== activeTutor.id) return false;
+      if (l.assignedTutorUsername && l.assignedTutorUsername.toLowerCase().trim() !== activeTutor.username.toLowerCase().trim()) return false;
+      if (l.assignedTutorName && l.assignedTutorName.toLowerCase().trim() !== activeTutor.name.toLowerCase().trim()) return false;
+
+      // 2. If explicitly assigned to this tutor, include
+      if (
+        (l.assignedTutorId && l.assignedTutorId === activeTutor.id) ||
+        (l.assignedTutorUsername && l.assignedTutorUsername.toLowerCase().trim() === activeTutor.username.toLowerCase().trim()) ||
+        (l.assignedTutorName && l.assignedTutorName.toLowerCase().trim() === activeTutor.name.toLowerCase().trim())
+      ) {
+        return true;
+      }
+
+      // 3. Fallback: match both school AND section
       const matchSchool = !l.schoolName || l.schoolName.toLowerCase().trim() === activeTutor.schoolName.toLowerCase().trim();
-      return matchSchool;
+      const matchSection = !l.section || !activeTutor.section || l.section.toLowerCase().trim() === activeTutor.section.toLowerCase().trim();
+      return matchSchool && matchSection;
     });
   }, [registeredLearners, activeTutor]);
 
-  // Submissions strictly belonging to the active tutor's assigned school profile
+  // Submissions strictly belonging to the active tutor
   const tutorClassSubmissions = useMemo(() => {
     return submissions.filter((s) => {
+      // 1. If explicitly assigned to a different tutor, exclude
+      if (s.assignedTutorId && s.assignedTutorId !== activeTutor.id) return false;
+      if (s.assignedTutorUsername && s.assignedTutorUsername.toLowerCase().trim() !== activeTutor.username.toLowerCase().trim()) return false;
+      if (s.assignedTutorName && s.assignedTutorName.toLowerCase().trim() !== activeTutor.name.toLowerCase().trim()) return false;
+
+      // 2. If explicitly assigned to this tutor, include
+      if (
+        (s.assignedTutorId && s.assignedTutorId === activeTutor.id) ||
+        (s.assignedTutorUsername && s.assignedTutorUsername.toLowerCase().trim() === activeTutor.username.toLowerCase().trim()) ||
+        (s.assignedTutorName && s.assignedTutorName.toLowerCase().trim() === activeTutor.name.toLowerCase().trim())
+      ) {
+        return true;
+      }
+
+      // 3. Check if student belongs to this tutor's roster
+      const belongsToTutorRoster = tutorClassRegisteredLearners.some(
+        (l) => l.id === s.studentId || (l.name.toLowerCase().trim() === s.studentName.toLowerCase().trim() && l.schoolName.toLowerCase().trim() === (s.schoolName || '').toLowerCase().trim())
+      );
+      if (belongsToTutorRoster) return true;
+
+      // 4. Fallback: match both school AND section
       const matchSchool = !s.schoolName || s.schoolName.toLowerCase().trim() === activeTutor.schoolName.toLowerCase().trim();
-      return matchSchool;
+      const matchSection = !s.section || !activeTutor.section || s.section.toLowerCase().trim() === activeTutor.section.toLowerCase().trim();
+      return matchSchool && matchSection;
     });
-  }, [submissions, activeTutor]);
+  }, [submissions, activeTutor, tutorClassRegisteredLearners]);
 
   // Sort class submissions by latest timestamp descending
   const sortedSubmissions = useMemo(() => {
@@ -620,9 +658,12 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
     onAddLearner({
       lrn: newLrn.trim() || `${Math.floor(100000000000 + Math.random() * 900000000000)}`,
       name: newName.trim(),
-      section: sec,
-      gradeLevel: inferredGrade,
-      schoolName: newSchoolName.trim() || 'Rizal Elementary School',
+      section: sec || activeTutor.section,
+      gradeLevel: inferredGrade || activeTutor.gradeLevel,
+      schoolName: newSchoolName.trim() || activeTutor.schoolName,
+      assignedTutorId: activeTutor.id,
+      assignedTutorUsername: activeTutor.username,
+      assignedTutorName: activeTutor.name,
     });
     setNewName('');
     setNewLrn('');
@@ -658,9 +699,12 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
           onAddLearner({
             lrn,
             name,
-            section,
-            gradeLevel: 'Grade 5',
-            schoolName: 'Rizal Elementary School',
+            section: section || activeTutor.section,
+            gradeLevel: activeTutor.gradeLevel || 'Grade 5',
+            schoolName: activeTutor.schoolName,
+            assignedTutorId: activeTutor.id,
+            assignedTutorUsername: activeTutor.username,
+            assignedTutorName: activeTutor.name,
           });
         }
       }
@@ -935,7 +979,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
               <span className="text-blue-400 text-lg font-semibold">({activeTutor.section})</span>
             </h2>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-              School Profile: <strong className="text-white">{activeTutor.schoolName}</strong> • Access Enforced: Red-flagged count and learner submissions are strictly based on your assigned school profile ({activeTutor.schoolName}).
+              Assigned Tutor: <strong className="text-white">{activeTutor.name}</strong> • Section: <strong className="text-white">{activeTutor.section}</strong> ({activeTutor.schoolName}) • Tutor Data Isolation Enforced: Viewing strictly learners assigned under your class.
             </p>
           </div>
 
@@ -1332,7 +1376,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
-            All Submissions ({submissions.length})
+            All Submissions ({tutorClassSubmissions.length})
           </button>
           <button
             onClick={() => setFilterSeverity('red')}
@@ -1393,7 +1437,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
               </p>
             </div>
             <span className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-lg shrink-0">
-              Showing {filteredSubmissions.length} of {submissions.length} Records
+              Showing {filteredSubmissions.length} of {tutorClassSubmissions.length} Records
             </span>
           </div>
 
@@ -1791,7 +1835,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                     <span>Registered Roster</span>
                   </h4>
                   <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    {filteredRegisteredLearners.length} of {registeredLearners.length} Registered
+                    {filteredRegisteredLearners.length} of {tutorClassRegisteredLearners.length} Assigned Learners
                   </span>
                 </div>
 
@@ -3007,7 +3051,7 @@ export const TutorDashboard: React.FC<TutorDashboardProps> = ({
                 <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider mb-2">Learner Assessment Results Breakdown</h4>
                 {sortedSubmissions.length === 0 ? (
                   <div className="p-6 text-center bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 italic">
-                    No assessment submissions currently recorded for {activeTutor.schoolName}.
+                    No assessment submissions currently recorded for {activeTutor.name} ({activeTutor.section}).
                   </div>
                 ) : (
                   <div className="border border-slate-200 rounded-xl overflow-hidden">

@@ -59,7 +59,7 @@ export default function App() {
 
   const [schoolHeadAccounts, setSchoolHeadAccounts] = useState<SchoolHeadAccount[]>(() => {
     try {
-      const saved = localStorage.getItem('irip_schoolHeadAccounts_v2');
+      const saved = localStorage.getItem('irip_schoolHeadAccounts_v3');
       return saved ? JSON.parse(saved) : INITIAL_SCHOOL_HEAD_ACCOUNTS;
     } catch {
       return INITIAL_SCHOOL_HEAD_ACCOUNTS;
@@ -97,6 +97,7 @@ export default function App() {
       'irip_tutorAccounts_v1',
       'irip_tutorAccounts_v2',
       'irip_schoolHeadAccounts_v1',
+      'irip_schoolHeadAccounts_v2',
       'irip_toolkit_v1',
       'irip_schools_v1',
     ];
@@ -144,7 +145,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('irip_schoolHeadAccounts_v2', JSON.stringify(schoolHeadAccounts));
+      localStorage.setItem('irip_schoolHeadAccounts_v3', JSON.stringify(schoolHeadAccounts));
     } catch (e) {
       console.error('Failed to persist schoolHeadAccounts to localStorage', e);
     }

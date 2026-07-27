@@ -29,6 +29,9 @@ export interface RegisteredLearner {
   gradeLevel: string;
   schoolName: string;
   registeredAt: string;
+  assignedTutorId?: string;
+  assignedTutorUsername?: string;
+  assignedTutorName?: string;
 }
 
 export type FlagSeverity = 'red' | 'yellow' | 'none';
@@ -95,6 +98,9 @@ export interface Submission {
   gradeLevel: string;
   schoolName: string;
   sdoName: string;
+  assignedTutorId?: string;
+  assignedTutorUsername?: string;
+  assignedTutorName?: string;
   assessmentId: string;
   assessmentTitle: string;
   subject: string;

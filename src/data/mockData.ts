@@ -90,7 +90,7 @@ export const INITIAL_SCHOOL_HEAD_ACCOUNTS: SchoolHeadAccount[] = LIGAO_ELEMENTAR
     id: `sh-${item.schoolId}`,
     username: `principal.${shortName}`,
     password: schoolPassword,
-    name: `Principal ${['Maria Teresa Santos', 'Alejandro Cruz', 'Rosalinda Garcia', 'Lourdes Reyes', 'Manuel Gomez', 'Corazon Aquino'][idx % 6]}`,
+    name: 'Principal Name',
     schoolName: item.name,
     schoolId: item.schoolId,
   };
